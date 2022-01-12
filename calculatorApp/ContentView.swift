@@ -42,7 +42,7 @@ enum CalculatorButtons: String {
         case .minus:
             return "-"
         case .multiply:
-            return  "x"
+            return  "×"
         case .divide:
             return "÷"
         case .ac:
@@ -67,9 +67,28 @@ enum CalculatorButtons: String {
         
         }
     }
+    
+    
+    
 }
 
+//create an environment object
+// you can treat this as a global application state
+class GlobalEnvironment: ObservableObject {
+    @Published var display = "0"
+    
+    // func will recieve buttons as param and according to it we will run dif funcs
+    func recieveInputButtons(calculatorButtons: CalculatorButtons) {
+        display = calculatorButtons.title
+    }
+    
+}
+
+
+
 struct ContentView: View {
+    @EnvironmentObject var env: GlobalEnvironment
+    
     let buttons:[[CalculatorButtons]] = [
         [.ac,.plusMinus,.percent,.divide],
         [.seven,.eight,.nine,.multiply],
@@ -84,7 +103,7 @@ struct ContentView: View {
             VStack ( spacing: 12){
                 HStack{
                     Spacer()
-                    Text("42").foregroundColor(Color.white).font(.system(size: 64))
+                    Text(env.display).foregroundColor(Color.white).font(.system(size: 64))
                 }
                 .padding(/*@START_MENU_TOKEN@*/.all/*@END_MENU_TOKEN@*/)
                 
@@ -94,19 +113,7 @@ struct ContentView: View {
                     HStack (spacing: 12){
                         ForEach(row, id: \.self){button in
                             // all the buttons are iterating so also encapsulate inside a button
-                            Button(action: {
-                                
-                            })
-                            // the view of the button
-                            {
-                                    Text(button.title)
-                                        .font(.system(size: 32))
-                                        .foregroundColor(Color.white)
-                                        .frame(width: self.buttonWidth(button: button), height: (UIScreen.main.bounds.width - 5 * 12) / 4)
-                                        .background(button.backgroundColor)
-                                        .cornerRadius(self.buttonWidth(button: button))
-                            }
-                            
+                            CalculatorButtonView(button: button)
                         }
                 }
                 
@@ -125,16 +132,41 @@ struct ContentView: View {
         }
         
     }
-    func buttonWidth(button: CalculatorButtons)-> CGFloat{
+    
+}
+
+// Refactoring the view to a subview
+struct CalculatorButtonView: View {
+    var button: CalculatorButtons
+    @EnvironmentObject var env: GlobalEnvironment
+    
+    
+    var body: some View{
+        Button(action: {
+            self.env.recieveInputButtons(calculatorButtons: button)
+    //                                self.env.display = button.title
+        }){ // the view of the button
+                Text(button.title)
+                    .font(.system(size: 32))
+                    .foregroundColor(Color.white)
+                    .frame(width: self.buttonWidth(button: button), height: (UIScreen.main.bounds.width - 5 * 12) / 4)
+                    .background(button.backgroundColor)
+                    .cornerRadius(self.buttonWidth(button: button))
+        }
+    }
+    
+    private func buttonWidth(button: CalculatorButtons)-> CGFloat{
         if button == .zero{
             return (UIScreen.main.bounds.width - 4 * 12) / 4*2
         }
         return (UIScreen.main.bounds.width - 5 * 12) / 4
     }
+    
 }
+
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        ContentView()
+        ContentView().environmentObject(GlobalEnvironment())
     }
 }
